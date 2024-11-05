@@ -1,0 +1,15 @@
+{
+    "name": "physio_ai_monorepo",
+    "private": true,
+    "scripts": {
+        "frontend": "cd packages/physio_ai && npm run dev",
+        "backend": "cd packages/backend && uvicorn app.main:app --reload --port 8000",
+        "dev": "concurrently \"npm run frontend\" \"npm run backend\""
+    },
+    "devDependencies": {
+        "@types/node": "22.9.0",
+        "@types/react": "18.3.12",
+        "concurrently": "^8.2.2",
+        "typescript": "5.6.3"
+    }
+}
