@@ -2,7 +2,7 @@
     "name": "physio_ai_monorepo",
     "private": true,
     "scripts": {
-        "frontend": "cd packages/physio_ai && npm run dev",
+        "frontend": "cd packages/physio_ai && npm install --legacy-peer-deps && npm run dev",
         "frontend_prod  ": "cd packages/physio_ai && npm run build && npm run start",
         "backend": "cd packages/backend && uvicorn app.main:app --reload --port 8000",
         "dev": "concurrently \"npm run frontend\" \"npm run backend\""

@@ -1,30 +1,52 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export class WebSocketService {
   private ws: WebSocket | null = null;
   private url: string;
+  private reconnectAttempts: number = 0;
+  private maxReconnectAttempts: number = 5;
 
   constructor(url: string = 'ws://localhost:8000/ws') {
     this.url = url;
   }
 
   connect() {
-    this.ws = new WebSocket(this.url);
-    
-    this.ws.onopen = () => {
-      console.log('WebSocket Connected');
-    };
+    try {
+      this.ws = new WebSocket(this.url);
+      
+      this.ws.onopen = () => {
+        console.log('WebSocket Connected');
+        this.reconnectAttempts = 0;
+      };
 
-    this.ws.onclose = () => {
-      console.log('WebSocket Disconnected');
-    };
+      this.ws.onclose = () => {
+        console.log('WebSocket Disconnected');
+        this.reconnect();
+      };
 
-    return this.ws;
+      this.ws.onerror = (error) => {
+        console.error('WebSocket Error:', error);
+      };
+
+      return this.ws;
+    } catch (error) {
+      console.error('WebSocket Connection Error:', error);
+      return null;
+    }
+  }
+
+  private reconnect() {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++;
+      console.log(`Reconnecting... Attempt ${this.reconnectAttempts}`);
+      setTimeout(() => this.connect(), 1000 * this.reconnectAttempts);
+    }
   }
 
   disconnect() {
     if (this.ws) {
       this.ws.close();
+      this.ws = null;
     }
   }
 
@@ -36,16 +58,26 @@ export class WebSocketService {
 }
 
 export function useWebSocket(url: string) {
-  const wsRef = useRef<WebSocket | null>(null);
+  const [ws, setWs] = useState<WebSocket | null>(null);
+  const wsService = useRef<WebSocketService | null>(null);
 
   useEffect(() => {
-    const wsService = new WebSocketService(url);
-    wsRef.current = wsService.connect();
+    wsService.current = new WebSocketService(url);
+    const socket = wsService.current.connect();
+    
+    if (socket) {
+      socket.onopen = () => {
+        console.log('WebSocket Connected');
+        setWs(socket);
+      };
+    }
 
     return () => {
-      wsService.disconnect();
+      if (wsService.current) {
+        wsService.current.disconnect();
+      }
     };
   }, [url]);
 
-  return wsRef.current;
+  return ws;
 }
